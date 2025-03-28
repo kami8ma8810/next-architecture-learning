@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react'
+'use client'
+
+import React, { useState, useRef, useEffect } from 'react'
 import { ReadingText } from '@/domain/entity/ReadingText/ReadingText'
 
 interface ReadingRecorderProps {
@@ -8,8 +10,35 @@ interface ReadingRecorderProps {
 
 export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecordingComplete }) => {
   const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // 録音時間の更新
+  useEffect(() => {
+    if (isRecording) {
+      timerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1)
+      }, 1000)
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
+  }, [isRecording])
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
 
   const startRecording = async () => {
     try {
@@ -17,6 +46,8 @@ export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecord
       const mediaRecorder = new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []
+      setRecordingTime(0)
+      setAudioUrl(null)
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -26,6 +57,8 @@ export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecord
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' })
+        const url = URL.createObjectURL(audioBlob)
+        setAudioUrl(url)
         onRecordingComplete(audioBlob)
         stream.getTracks().forEach(track => track.stop())
       }
@@ -34,6 +67,7 @@ export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecord
       setIsRecording(true)
     } catch (error) {
       console.error('録音の開始に失敗しました:', error)
+      alert('マイクへのアクセスが拒否されたか、エラーが発生しました。')
     }
   }
 
@@ -49,19 +83,42 @@ export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecord
       <h2 className="_text-2xl _font-bold">音声録音</h2>
       <div className="_p-4 _bg-white _rounded-lg _shadow">
         <h3 className="_text-lg _font-semibold">{text.title}</h3>
-        <p className="_text-gray-600">{text.content}</p>
-      </div>
-      <div className="_flex _gap-4">
-        <button
-          onClick={isRecording ? stopRecording : startRecording}
-          className={`_px-4 _py-2 _rounded-lg _font-semibold _transition-colors ${
-            isRecording
-              ? '_bg-red-500 _hover:bg-red-600 _text-white'
-              : '_bg-blue-500 _hover:bg-blue-600 _text-white'
-          }`}
-        >
-          {isRecording ? '録音を停止' : '録音を開始'}
-        </button>
+        <p className="_text-gray-600 _mb-4">{text.content}</p>
+        
+        <div className="_flex _flex-col _items-center _gap-4">
+          {/* 録音状態とタイマー */}
+          <div className="_flex _items-center _gap-4">
+            {isRecording && (
+              <div className="_flex _items-center _gap-2">
+                <div className="_w-3 _h-3 _bg-red-500 _rounded-full _animate-pulse" />
+                <span className="_text-red-500">録音中</span>
+              </div>
+            )}
+            <span className="_text-lg _font-mono">{formatTime(recordingTime)}</span>
+          </div>
+
+          {/* 録音ボタン */}
+          <button
+            onClick={isRecording ? stopRecording : startRecording}
+            className={`_px-6 _py-3 _rounded-full _font-semibold _transition-all _transform hover:_scale-105 ${
+              isRecording
+                ? '_bg-red-500 hover:_bg-red-600 _text-white'
+                : '_bg-blue-500 hover:_bg-blue-600 _text-white'
+            }`}
+          >
+            {isRecording ? '録音を停止' : '録音を開始'}
+          </button>
+
+          {/* 音声プレビュー */}
+          {audioUrl && (
+            <div className="_w-full _max-w-md">
+              <p className="_text-sm _text-gray-600 _mb-2">録音プレビュー:</p>
+              <audio controls className="_w-full" src={audioUrl}>
+                お使いのブラウザは音声の再生をサポートしていません。
+              </audio>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
