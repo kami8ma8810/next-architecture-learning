@@ -178,22 +178,41 @@
 git clone [repository-url]
 ```
 
-2. 依存関係のインストール
+2. bunのインストール（まだの場合）
 ```bash
-npm install
+curl -fsSL https://bun.sh/install | bash
 ```
 
-3. 環境変数の設定
+3. 依存関係のインストール
+```bash
+bun install
+```
+
+4. 環境変数の設定
 ```bash
 cp .env.example .env.local
 ```
 
-4. 開発サーバーの起動
+5. 開発サーバーの起動
 ```bash
-npm run dev
+bun run dev
 ```
 
-5. テストの実行
+6. テストの実行
 ```bash
-npm test
-``` 
+bun test
+```
+
+## パッケージマネージャーについて
+このプロジェクトでは、高速で効率的な`bun`をパッケージマネージャーとして採用しています。
+
+### bunを選んだ理由
+- **高速なインストール**: npmやyarnと比較して、依存関係のインストールが大幅に高速
+- **TypeScriptのネイティブサポート**: 追加の設定なしでTypeScriptをサポート
+- **テストランナーの統合**: ビルトインのテストランナーを提供
+- **モダンな機能**: 最新のJavaScript/TypeScript機能をサポート
+
+### 代替パッケージマネージャー
+- **pnpm**: ディスク容量を効率的に使用する場合の選択肢
+- **yarn**: 従来の安定性を重視する場合の選択肢
+- **npm**: 最も広く使用されているが、比較的遅い 
