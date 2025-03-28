@@ -6,9 +6,10 @@ import { ReadingText } from '@/domain/entity/ReadingText/ReadingText'
 interface ReadingRecorderProps {
   text: ReadingText
   onRecordingComplete: (audioBlob: Blob) => void
+  onBack: () => void
 }
 
-export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecordingComplete }) => {
+export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecordingComplete, onBack }) => {
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -78,9 +79,31 @@ export const ReadingRecorder: React.FC<ReadingRecorderProps> = ({ text, onRecord
     }
   }
 
+  const handleBack = () => {
+    if (isRecording) {
+      if (confirm('録音を中止して一覧に戻りますか？')) {
+        stopRecording()
+        onBack()
+      }
+    } else {
+      onBack()
+    }
+  }
+
   return (
     <div className="_space-y-4">
-      <h2 className="_text-2xl _font-bold">音声録音</h2>
+      <div className="_flex _items-center _justify-between">
+        <h2 className="_text-2xl _font-bold">音声録音</h2>
+        <button
+          onClick={handleBack}
+          className="_px-4 _py-2 _text-gray-600 hover:_text-gray-800 _flex _items-center _gap-2"
+        >
+          <svg className="_w-5 _h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          一覧に戻る
+        </button>
+      </div>
       <div className="_p-4 _bg-white _rounded-lg _shadow">
         <h3 className="_text-lg _font-semibold">{text.title}</h3>
         <p className="_text-gray-600 _mb-4">{text.content}</p>

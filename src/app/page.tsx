@@ -29,6 +29,10 @@ export default function Home() {
     setSelectedText(text)
   }
 
+  const handleBack = () => {
+    setSelectedText(null)
+  }
+
   const handleRecordingComplete = (audioBlob: Blob) => {
     // TODO: 音声ファイルのアップロード処理を実装
     console.log('録音が完了しました:', audioBlob)
@@ -45,6 +49,7 @@ export default function Home() {
         <ReadingRecorder
           text={selectedText}
           onRecordingComplete={handleRecordingComplete}
+          onBack={handleBack}
         />
       ) : (
         <ReadingTextList
